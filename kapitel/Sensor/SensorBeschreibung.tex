@@ -1,0 +1,96 @@
+\newpage
+\section{BackBuddy ESP32 Firmware}
+
+\subsection{Zweck und Anwendung}
+
+Diese Firmware wurde für das BackBuddy-System entwickelt, ein IoT-Gerät zur Überwachung der Sitzgewohnheiten. Das System basiert auf einem ESP32-Mikrocontroller und erkennt automatisch, ob eine Person sitzt oder steht, um diese Informationen an ein Backend-System zu übermitteln.
+
+\subsection{Architektur und Aufbau}
+
+\subsubsection{Dual-Core-Architektur}
+Die Firmware nutzt die Dual-Core-Fähigkeiten des ESP32 optimal aus:
+
+\begin{itemize}
+\item \textbf{Core 0}: Verwaltet die WebSocket-Kommunikation mit dem Backend und verarbeitet Nachrichten
+\item \textbf{Core 1}: Übernimmt die kontinuierliche Überwachung des Sitzsensors und die Zustandserkennung
+\end{itemize}
+
+Diese Trennung gewährleistet eine stabile Netzwerkkommunikation ohne Unterbrechungen durch Sensorabfragen.
+
+\subsubsection{Zustandsautomaten-Design}
+Das System implementiert einen robusten Zustandsautomaten für die Positionserkennung:
+
+\begin{itemize}
+\item \textbf{Zustände}: SITTING, STANDING, UNKNOWN
+\item \textbf{Timeout-Mechanismus}: 5-Sekunden-Regel verhindert false-positive Meldungen durch kurze Bewegungen
+\item \textbf{Hysterese-Verhalten}: Nur echte Zustandsänderungen werden an das Backend gemeldet
+\end{itemize}
+
+\subsection{Besondere technische Merkmale}
+
+\subsubsection{Thread-sichere Kommunikation}
+Die Firmware verwendet Mutexe und Semaphoren für die sichere Datenübertragung zwischen den beiden CPU-Kernen. Dies verhindert Race Conditions und gewährleistet Datenkonsistenz.
+
+\subsubsection{Dynamisches Secret-Management}
+Ein ausgeklügeltes System für die sichere Verwaltung von Authentifizierungsschlüsseln:
+
+\begin{itemize}
+\item \textbf{Drei-Phasen-Prozess}: Secret-Empfang, Bestätigung, Aktivierung
+\item \textbf{Cooldown-Mechanismus}: 30-Sekunden-Sperre zwischen Secret-Updates
+\item \textbf{Timeout-Behandlung}: 10-Sekunden-Timeout für Backend-Bestätigungen
+\item \textbf{Rollback-Fähigkeit}: Automatisches Zurücksetzen bei fehlgeschlagenen Updates
+\end{itemize}
+
+\subsubsection{Intelligente WiFi-Konfiguration}
+Integration des WiFiManager-Systems ermöglicht:
+
+\begin{itemize}
+\item \textbf{Plug-and-Play-Setup}: Automatischer Access Point bei fehlender Konfiguration
+\item \textbf{Benutzerfreundliche Einrichtung}: Web-Interface für WLAN- und Secret-Konfiguration
+\item \textbf{Persistente Speicherung}: Verwendung des ESP32-NVS für dauerhafte Konfigurationsspeicherung
+\end{itemize}
+
+\subsubsection{Sichere WebSocket-Kommunikation}
+\begin{itemize}
+\item \textbf{TLS-Verschlüsselung}: Verwendung von SSL-Zertifikaten für sichere Verbindungen
+\item \textbf{Automatische Wiederverbindung}: 5-Sekunden-Intervall bei Verbindungsabbrüchen
+\item \textbf{JSON-basierte Nachrichten}: Strukturierte Kommunikation mit dem Backend
+\end{itemize}
+
+\subsection{Robuste Fehlerbehandlung}
+
+\subsubsection{Hardware-Reset-Funktion}
+Physischer Reset-Button (Boot-Button des ESP32) ermöglicht:
+\begin{itemize}
+\item Löschen aller gespeicherten Konfigurationen
+\item Neustart in den Konfigurationsmodus
+\item Vollständiges Zurücksetzen bei Problemen
+\end{itemize}
+
+\subsubsection{Adaptive Sensor-Kalibrierung}
+\begin{itemize}
+\item \textbf{Analoger Schwellenwert}: 2000er-Grenzwert für zuverlässige Sitz-/Steh-Erkennung
+\item \textbf{Kontinuierliche Überwachung}: 100ms-Abtastrate für responsive Erkennung
+\item \textbf{Entstörung}: Zeitbasierte Filterung von Sensor-Rauschen
+\end{itemize}
+
+\subsubsection{Speicher- und Ressourcenmanagement}
+\begin{itemize}
+\item \textbf{Stack-optimierte Tasks}: 10KB Stack-Größe pro Task
+\item \textbf{Präferenz-basierte Konfiguration}: Effiziente Nutzung des ESP32-NVS
+\item \textbf{JSON-Serialisierung}: Kompakte Datenübertragung
+\end{itemize}
+
+\subsection{Besonderheiten der Implementierung}
+
+\subsubsection{State Machine Pattern}
+Klare Trennung zwischen Sensor-Zuständen und gemeldeten Zuständen verhindert redundante Backend-Nachrichten und reduziert Netzwerklast.
+
+\subsubsection{Asynchrone Verarbeitung}
+Durch die Dual-Core-Architektur können Sensor-Überwachung und Netzwerkkommunikation parallel ablaufen, ohne sich gegenseitig zu blockieren.
+
+\subsubsection{Fail-Safe-Mechanismen}
+Mehrschichtige Absicherung gegen Konfigurationsfehler, Netzwerkausfälle und Hardware-Probleme durch automatische Wiederherstellungsroutinen.
+
+\subsubsection{Skalierbare Architektur}
+Die modulare Struktur ermöglicht einfache Erweiterungen um zusätzliche Sensoren oder Kommunikationsprotokolle ohne grundlegende Architekturänderungen.
